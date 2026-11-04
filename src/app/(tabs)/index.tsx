@@ -6,13 +6,14 @@ import { Calendar, DateData } from 'react-native-calendars';
 
 import { Fab } from '@/components/Fab';
 import { colors, statusColors } from '@/components/theme';
-import { Card, EmptyState, ErrorText, StatusPill, styles } from '@/components/ui';
-import { listJobsBetween } from '@/lib/api';
-import { formatAddress, formatDuration, formatMoney, formatTime } from '@/lib/format';
+import { Card, EmptyState, ErrorText, Section, StatusPill, styles } from '@/components/ui';
+import { listJobsBetween, listUpcomingScheduledJobs } from '@/lib/api';
+import { formatAddress, formatDateTime, formatDuration, formatMoney, formatTime } from '@/lib/format';
 import { Job } from '@/lib/types';
 import { useFocusQuery } from '@/lib/useQuery';
 
 const dayKey = (iso: string) => format(new Date(iso), 'yyyy-MM-dd');
+const UPCOMING_COUNT = 5;
 
 export default function ScheduleScreen() {
   const [selected, setSelected] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -27,6 +28,18 @@ export default function ScheduleScreen() {
   } = useFocusQuery(
     useCallback(() => listJobsBetween(startOfWeek(month), addDays(endOfWeek(endOfMonth(month)), 1)), [month]),
   );
+
+  // Soonest scheduled jobs from now, regardless of which month is showing.
+  const {
+    data: upcoming = [],
+    error: upcomingError,
+    reload: reloadUpcoming,
+  } = useFocusQuery(useCallback(() => listUpcomingScheduledJobs(UPCOMING_COUNT), []));
+
+  const refresh = () => {
+    reload();
+    reloadUpcoming();
+  };
 
   const jobsByDay = useMemo(() => {
     const map: Record<string, Job[]> = {};
@@ -56,7 +69,7 @@ export default function ScheduleScreen() {
         data={dayJobs}
         keyExtractor={(job) => job.id}
         contentContainerStyle={styles.listContent}
-        refreshControl={<RefreshControl refreshing={loading && jobs.length > 0} onRefresh={reload} />}
+        refreshControl={<RefreshControl refreshing={loading && jobs.length > 0} onRefresh={refresh} />}
         ListHeaderComponent={
           <View style={{ gap: 12 }}>
             <Calendar
@@ -86,29 +99,45 @@ export default function ScheduleScreen() {
           </View>
         }
         ListEmptyComponent={loading ? undefined : <EmptyState text="No jobs this day. Tap + to add one." />}
-        renderItem={({ item: job }) => (
-          <Card onPress={() => router.push({ pathname: '/jobs/[id]', params: { id: job.id } })}>
-            <View style={styles.row}>
-              <Text style={styles.title}>
-                {formatTime(job.starts_at)} · {job.client?.name}
-              </Text>
-              <StatusPill status={job.status} />
-            </View>
-            <Text style={styles.body}>
-              {job.title} · {formatDuration(job.duration_minutes)}
-              {job.price != null ? ` · ${formatMoney(job.price)}` : ''}
-              {job.series_id ? '  ↻' : ''}
-            </Text>
-            {!!(job.address || formatAddress(job.client)) && (
-              <Text style={styles.muted}>{job.address || formatAddress(job.client)}</Text>
-            )}
-          </Card>
-        )}
+        renderItem={({ item: job }) => <JobCard job={job} heading={formatTime(job.starts_at)} />}
+        ListFooterComponent={
+          <View style={{ marginTop: 16 }}>
+            <Section title="Upcoming jobs">
+              <ErrorText error={upcomingError} />
+              {!upcomingError && upcoming.length === 0 && (
+                <Text style={styles.muted}>Nothing scheduled.</Text>
+              )}
+              {upcoming.map((job) => (
+                <JobCard key={job.id} job={job} heading={formatDateTime(job.starts_at)} />
+              ))}
+            </Section>
+          </View>
+        }
       />
       <Fab
         label="New job"
         onPress={() => router.push({ pathname: '/jobs/new', params: { date: selected } })}
       />
     </View>
+  );
+}
+
+function JobCard({ job, heading }: { job: Job; heading: string }) {
+  const address = job.address || formatAddress(job.client);
+  return (
+    <Card onPress={() => router.push({ pathname: '/jobs/[id]', params: { id: job.id } })}>
+      <View style={styles.row}>
+        <Text style={[styles.title, { flex: 1 }]}>
+          {heading} · {job.client?.name}
+        </Text>
+        <StatusPill status={job.status} />
+      </View>
+      <Text style={styles.body}>
+        {job.title} · {formatDuration(job.duration_minutes)}
+        {job.price != null ? ` · ${formatMoney(job.price)}` : ''}
+        {job.series_id ? '  ↻' : ''}
+      </Text>
+      {!!address && <Text style={styles.muted}>{address}</Text>}
+    </Card>
   );
 }
