@@ -4,7 +4,7 @@ import { Alert, Linking, Text } from 'react-native';
 
 import { ReminderPicker } from '@/components/ReminderPicker';
 import { Button, Card, ErrorText, FormScreen, Section, styles } from '@/components/ui';
-import { getReminderSettings, saveReminderSettings } from '@/lib/api';
+import { deleteOwnAccount, getReminderSettings, saveReminderSettings } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { clearReminders, ensureNotificationPermission, syncReminders } from '@/lib/reminders';
 import { supabase } from '@/lib/supabase';
@@ -26,6 +26,7 @@ export default function SettingsScreen() {
   const [permission, setPermission] = useState<boolean | null>(null);
   const [scheduledCount, setScheduledCount] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const applyStatus = (status: NotificationStatus) => {
@@ -70,6 +71,31 @@ export default function SettingsScreen() {
     await supabase.auth.signOut();
   };
 
+  const deleteAccount = async () => {
+    setDeleting(true);
+    setError(null);
+    try {
+      await deleteOwnAccount();
+      await clearReminders();
+      // The user no longer exists server-side, so only clear the local session.
+      await supabase.auth.signOut({ scope: 'local' });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      setDeleting(false);
+    }
+  };
+
+  const confirmDeleteAccount = () => {
+    Alert.alert(
+      'Delete account?',
+      'This permanently deletes your account and all of your clients, quotes and jobs. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete account', style: 'destructive', onPress: deleteAccount },
+      ],
+    );
+  };
+
   return (
     <FormScreen>
       <Section title="Default reminders">
@@ -98,6 +124,8 @@ export default function SettingsScreen() {
       <Section title="Account">
         <Text style={styles.muted}>Signed in as {session?.user.email}</Text>
         <Button variant="danger" title="Sign out" onPress={signOut} />
+        <Button variant="danger" title="Delete account" onPress={confirmDeleteAccount} loading={deleting} />
+        <Text style={styles.muted}>Permanently removes your account and everything stored in it.</Text>
       </Section>
     </FormScreen>
   );

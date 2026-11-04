@@ -191,6 +191,11 @@ export async function stopSeries(seriesId: string, after: string): Promise<void>
  * Materialises upcoming occurrences for all active series (idempotent).
  * 56 weeks ahead, so a yearly job's next visit is always on the calendar.
  */
+// Permanently deletes the signed-in user and, via cascades, all of their data.
+export async function deleteOwnAccount(): Promise<void> {
+  unwrap(await supabase.rpc('delete_own_account'));
+}
+
 export async function extendJobSeries(horizonWeeks = 56): Promise<number> {
   return unwrap(await supabase.rpc('extend_job_series', { horizon_weeks: horizonWeeks }));
 }
