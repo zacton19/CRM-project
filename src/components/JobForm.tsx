@@ -48,11 +48,18 @@ export function JobForm({ initial, defaults = {}, onSubmit }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const parsedPrice = parseAmount(price);
-  const valid = !!client && !Number.isNaN(parsedPrice);
   const intervalMonths = repeat === 'none' ? null : repeat === 'other' ? otherMonths : repeat;
 
   const submit = async () => {
-    if (!client) return;
+    // Explain what's missing instead of silently disabling the button.
+    if (!client) {
+      setError('Choose a client: tap one in the list, or tap “Add” to create a new one.');
+      return;
+    }
+    if (Number.isNaN(parsedPrice)) {
+      setError('Price must be a number, e.g. 25 or 25.50.');
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -161,12 +168,7 @@ export function JobForm({ initial, defaults = {}, onSubmit }: Props) {
       )}
 
       <ErrorText error={error} />
-      <Button
-        title={isEdit ? 'Save job' : 'Schedule job'}
-        onPress={submit}
-        loading={saving}
-        disabled={!valid}
-      />
+      <Button title={isEdit ? 'Save job' : 'Schedule job'} onPress={submit} loading={saving} />
     </FormScreen>
   );
 }

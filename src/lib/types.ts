@@ -12,10 +12,7 @@ export type Client = {
   name: string;
   phone: string | null;
   email: string | null;
-  address_line1: string | null;
-  address_line2: string | null;
-  city: string | null;
-  postcode: string | null;
+  address: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -23,10 +20,7 @@ export type Client = {
 
 export type ClientInput = Omit<Client, 'id' | 'created_at' | 'updated_at'>;
 
-export type ClientSummary = Pick<
-  Client,
-  'id' | 'name' | 'address_line1' | 'address_line2' | 'city' | 'postcode'
->;
+export type ClientSummary = Pick<Client, 'id' | 'name' | 'address'>;
 
 export const QUOTE_STATUSES = ['draft', 'sent', 'accepted', 'declined'] as const;
 export type QuoteStatus = (typeof QUOTE_STATUSES)[number];

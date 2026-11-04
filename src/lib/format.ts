@@ -9,11 +9,8 @@ export function formatMoney(amount: number | null | undefined): string {
   return amount == null ? '—' : money.format(amount);
 }
 
-export function formatAddress(client: Partial<ClientSummary> | null | undefined, separator = ', '): string {
-  if (!client) return '';
-  return [client.address_line1, client.address_line2, client.city, client.postcode]
-    .filter((part) => part && part.trim())
-    .join(separator);
+export function formatAddress(client: Partial<ClientSummary> | null | undefined): string {
+  return client?.address?.trim() ?? '';
 }
 
 export function formatTime(iso: string | Date): string {

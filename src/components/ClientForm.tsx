@@ -8,10 +8,7 @@ const EMPTY: ClientInput = {
   name: '',
   phone: null,
   email: null,
-  address_line1: null,
-  address_line2: null,
-  city: null,
-  postcode: null,
+  address: null,
   notes: null,
 };
 
@@ -34,15 +31,12 @@ export function ClientForm({ initial, onSubmit }: Props) {
     setSaving(true);
     setError(null);
     try {
-      const { name, phone, email, address_line1, address_line2, city, postcode, notes } = form;
+      const { name, phone, email, address, notes } = form;
       await onSubmit({
         name: name.trim(),
         phone,
         email,
-        address_line1,
-        address_line2,
-        city,
-        postcode,
+        address: address?.trim() || null,
         notes,
       });
     } catch (e) {
@@ -56,10 +50,15 @@ export function ClientForm({ initial, onSubmit }: Props) {
       <Field label="Name *" {...bind('name')} value={form.name} autoCapitalize="words" />
       <Field label="Phone" {...bind('phone')} keyboardType="phone-pad" autoComplete="tel" />
       <Field label="Email" {...bind('email')} keyboardType="email-address" autoCapitalize="none" />
-      <Field label="Address line 1" {...bind('address_line1')} autoComplete="street-address" />
-      <Field label="Address line 2" {...bind('address_line2')} />
-      <Field label="Town / city" {...bind('city')} />
-      <Field label="Postcode / ZIP" {...bind('postcode')} autoCapitalize="characters" />
+      <Field
+        label="Address"
+        {...bind('address')}
+        multiline
+        style={{ minHeight: 64 }}
+        autoComplete="street-address"
+        textContentType="fullStreetAddress"
+        placeholder="e.g. 12 High Street, Leeds, LS1 1AA"
+      />
       <Field
         label="Notes"
         {...bind('notes')}

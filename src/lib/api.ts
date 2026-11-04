@@ -12,7 +12,7 @@ import {
   ReminderSettings,
 } from './types';
 
-const CLIENT_SUMMARY = 'client:clients(id, name, address_line1, address_line2, city, postcode)';
+const CLIENT_SUMMARY = 'client:clients(id, name, address)';
 
 function unwrap<T>({ data, error }: { data: T | null; error: { message: string } | null }): T {
   if (error) throw new Error(error.message);
@@ -26,9 +26,7 @@ export async function listClients(search = ''): Promise<Client[]> {
   let query = supabase.from('clients').select('*').order('name');
   const term = search.trim().replace(/[%,()]/g, ' ');
   if (term) {
-    query = query.or(
-      `name.ilike.%${term}%,address_line1.ilike.%${term}%,city.ilike.%${term}%,postcode.ilike.%${term}%,phone.ilike.%${term}%`,
-    );
+    query = query.or(`name.ilike.%${term}%,address.ilike.%${term}%,phone.ilike.%${term}%`);
   }
   return unwrap(await query);
 }

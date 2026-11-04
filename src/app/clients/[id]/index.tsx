@@ -68,7 +68,16 @@ export default function ClientDetail() {
       />
 
       <Card>
-        {!!address && <Text style={styles.body}>{address}</Text>}
+        {address ? (
+          <Text style={styles.body}>{address}</Text>
+        ) : (
+          <Text
+            style={[styles.body, { color: colors.primary }]}
+            onPress={() => router.push({ pathname: '/clients/[id]/edit', params: { id } })}
+          >
+            + Add address
+          </Text>
+        )}
         {!!client.phone && (
           <Text
             style={[styles.body, { color: colors.primary }]}
@@ -84,9 +93,6 @@ export default function ClientDetail() {
           >
             {client.email}
           </Text>
-        )}
-        {!address && !client.phone && !client.email && (
-          <Text style={styles.muted}>No contact details yet.</Text>
         )}
       </Card>
 
