@@ -99,7 +99,9 @@ export default function ScheduleScreen() {
               {job.price != null ? ` · ${formatMoney(job.price)}` : ''}
               {job.series_id ? '  ↻' : ''}
             </Text>
-            {!!formatAddress(job.client) && <Text style={styles.muted}>{formatAddress(job.client)}</Text>}
+            {!!(job.address || formatAddress(job.client)) && (
+              <Text style={styles.muted}>{job.address || formatAddress(job.client)}</Text>
+            )}
           </Card>
         )}
       />

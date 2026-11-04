@@ -31,8 +31,8 @@ export default function NewJob() {
   return (
     <JobForm
       defaults={{ client, startsAt, title, price }}
-      onSubmit={async ({ input, intervalWeeks }) => {
-        await createJob(input, intervalWeeks);
+      onSubmit={async ({ input, intervalMonths }) => {
+        await createJob(input, intervalMonths);
         syncReminders().catch(() => {});
         router.back();
       }}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Switch, Text, View } from 'react-native';
 
-import { formatDuration, parseAmount } from '@/lib/format';
+import { parseAmount } from '@/lib/format';
 import { Client, DEFAULT_REMINDERS, Job, JobInput, ReminderSettings } from '@/lib/types';
 
 import { ClientPicker } from './ClientPicker';
@@ -10,10 +10,13 @@ import { ReminderPicker } from './ReminderPicker';
 import { colors } from './theme';
 import { Button, Card, Chip, ErrorText, Field, FormScreen, Label, styles } from './ui';
 
-const DURATIONS = [30, 45, 60, 90, 120, 180];
-const REPEATS = [null, 2, 4, 6, 8, 12];
+const DEFAULT_TITLE = 'Window clean';
+const DEFAULT_DURATION_MINUTES = 60;
+const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
-export type JobFormValues = { input: JobInput; intervalWeeks: number | null; applyToFuture: boolean };
+type RepeatMode = 'none' | 6 | 12 | 'other';
+
+export type JobFormValues = { input: JobInput; intervalMonths: number | null; applyToFuture: boolean };
 
 type Props = {
   initial?: Job;
@@ -31,21 +34,22 @@ export function JobForm({ initial, defaults = {}, onSubmit }: Props) {
   const [client, setClient] = useState<Pick<Client, 'id' | 'name'> | null>(
     initial?.client ?? defaults.client ?? null,
   );
-  const [title, setTitle] = useState(initial?.title ?? defaults.title ?? 'Window clean');
   const [startsAt, setStartsAt] = useState(
     initial ? new Date(initial.starts_at) : (defaults.startsAt ?? new Date()),
   );
-  const [duration, setDuration] = useState(initial?.duration_minutes ?? 60);
   const [price, setPrice] = useState(initial?.price != null ? String(initial.price) : (defaults.price ?? ''));
   const [notes, setNotes] = useState(initial?.notes ?? '');
-  const [intervalWeeks, setIntervalWeeks] = useState<number | null>(null);
+  const [address, setAddress] = useState(initial?.address ?? '');
+  const [repeat, setRepeat] = useState<RepeatMode>('none');
+  const [otherMonths, setOtherMonths] = useState(3);
   const [customReminders, setCustomReminders] = useState<ReminderSettings | null>(initial?.reminders ?? null);
   const [applyToFuture, setApplyToFuture] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const parsedPrice = parseAmount(price);
-  const valid = !!client && !!title.trim() && !Number.isNaN(parsedPrice);
+  const valid = !!client && !Number.isNaN(parsedPrice);
+  const intervalMonths = repeat === 'none' ? null : repeat === 'other' ? otherMonths : repeat;
 
   const submit = async () => {
     if (!client) return;
@@ -55,14 +59,16 @@ export function JobForm({ initial, defaults = {}, onSubmit }: Props) {
       await onSubmit({
         input: {
           client_id: client.id,
-          title: title.trim(),
+          // Not editable in the form; existing jobs keep theirs.
+          title: initial?.title ?? defaults.title ?? DEFAULT_TITLE,
           starts_at: startsAt.toISOString(),
-          duration_minutes: duration,
+          duration_minutes: initial?.duration_minutes ?? DEFAULT_DURATION_MINUTES,
           price: parsedPrice,
           notes: notes.trim() || null,
+          address: address.trim() || null,
           reminders: customReminders,
         },
-        intervalWeeks,
+        intervalMonths,
         applyToFuture,
       });
     } catch (e) {
@@ -74,22 +80,7 @@ export function JobForm({ initial, defaults = {}, onSubmit }: Props) {
   return (
     <FormScreen>
       <ClientPicker value={client} onChange={setClient} />
-      <Field label="Job *" value={title} onChangeText={setTitle} />
       <DateTimeField label="Start" value={startsAt} onChange={setStartsAt} />
-
-      <View style={{ gap: 6 }}>
-        <Label>Duration</Label>
-        <View style={styles.wrap}>
-          {DURATIONS.map((m) => (
-            <Chip
-              key={m}
-              label={formatDuration(m)}
-              selected={duration === m}
-              onPress={() => setDuration(m)}
-            />
-          ))}
-        </View>
-      </View>
 
       <Field
         label="Price"
@@ -103,20 +94,41 @@ export function JobForm({ initial, defaults = {}, onSubmit }: Props) {
         <View style={{ gap: 6 }}>
           <Label>Repeat</Label>
           <View style={styles.wrap}>
-            {REPEATS.map((w) => (
-              <Chip
-                key={w ?? 0}
-                label={w ? `Every ${w} weeks` : 'One-off'}
-                selected={intervalWeeks === w}
-                onPress={() => setIntervalWeeks(w)}
-              />
-            ))}
+            <Chip label="One-off" selected={repeat === 'none'} onPress={() => setRepeat('none')} />
+            <Chip label="Every 6 months" selected={repeat === 6} onPress={() => setRepeat(6)} />
+            <Chip label="Every 12 months" selected={repeat === 12} onPress={() => setRepeat(12)} />
+            <Chip label="Other" selected={repeat === 'other'} onPress={() => setRepeat('other')} />
           </View>
-          {intervalWeeks && (
-            <Text style={styles.muted}>Visits are added automatically about 6 months ahead.</Text>
+          {repeat === 'other' && (
+            <View style={{ gap: 6, marginTop: 4 }}>
+              <Text style={styles.muted}>Every how many months?</Text>
+              <View style={styles.wrap}>
+                {MONTHS.map((m) => (
+                  <Chip
+                    key={m}
+                    label={String(m)}
+                    selected={otherMonths === m}
+                    onPress={() => setOtherMonths(m)}
+                  />
+                ))}
+              </View>
+            </View>
+          )}
+          {intervalMonths && (
+            <Text style={styles.muted}>
+              Repeats every {intervalMonths === 1 ? 'month' : `${intervalMonths} months`}. Upcoming visits are
+              added automatically.
+            </Text>
           )}
         </View>
       )}
+
+      <Field
+        label="Address"
+        value={address}
+        onChangeText={setAddress}
+        placeholder="Leave blank to use the client's address"
+      />
 
       <Field label="Notes" value={notes} onChangeText={setNotes} multiline />
 
@@ -143,7 +155,7 @@ export function JobForm({ initial, defaults = {}, onSubmit }: Props) {
             />
           </View>
           <Text style={styles.muted}>
-            Updates job name, duration, price, notes and reminders. Dates stay as they are.
+            Updates price, address, notes and reminders. Dates stay as they are.
           </Text>
         </Card>
       )}

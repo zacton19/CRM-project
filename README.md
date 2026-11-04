@@ -4,7 +4,7 @@ CRM for a window cleaning business. It's built with Expo (React Native) and Supa
 
 - **Clients**: name, phone, email, address, notes, with search, tap to call/email, and directions in Maps
 - **Quotes**: amount, description, status (draft / sent / accepted / declined), and a "schedule job from this quote" button
-- **Schedule**: a month calendar with a dot for each job, the selected day's jobs with a day total, and one-off or repeating jobs (every 2/4/6/8/12 weeks)
+- **Schedule**: a month calendar with a dot for each job, the selected day's jobs with a day total, and one-off or repeating jobs (every 6 or 12 months, or any interval from 1 to 12 months)
 - **Reminders**: local notifications on your phone. You set default lead times (e.g. 1 hour before, plus 6pm the evening before) and can override them per job. Tapping a reminder opens the job.
 
 ## Setup
@@ -12,7 +12,7 @@ CRM for a window cleaning business. It's built with Expo (React Native) and Supa
 ### 1. Supabase
 
 1. Create a project at <https://supabase.com/dashboard>.
-2. Open **SQL Editor**, paste the contents of [`supabase/migrations/20261103000000_init.sql`](supabase/migrations/20261103000000_init.sql) and run it.
+2. Open **SQL Editor**, then paste and run each file in [`supabase/migrations/`](supabase/migrations/) in filename order.
    If you use the Supabase CLI, you can instead run `npx supabase link` and then `npx supabase db push`.
 3. Under **Authentication → Sign In / Providers → Email**, you can turn off "Confirm email" so you can sign in straight away.
 4. Once you've created your own account in the app, turn off **Allow new users to sign up** so nobody else can register.
@@ -40,7 +40,7 @@ To install it as a standalone app (no Expo Go), build it with EAS: `npx eas-cli@
 
 Reminders are scheduled **on the phone itself**, so there's no server and no push service. Each time the app opens or comes back to the foreground, it:
 
-1. tops up repeating jobs to about 6 months ahead (the `extend_job_series` database function), then
+1. tops up repeating jobs to about 13 months ahead (the `extend_job_series` database function), then
 2. cancels all pending reminders and reschedules the soonest 60 of them. iOS allows at most 64 pending notifications per app.
 
 So reminders stay accurate as long as you open the app now and then; with a typical round, opening it every week or two is plenty. Any change you make to a job reschedules its reminders immediately.

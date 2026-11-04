@@ -20,6 +20,8 @@ export function FormScreen({ children }: PropsWithChildren) {
       contentContainerStyle={styles.formContent}
       keyboardShouldPersistTaps="handled"
       automaticallyAdjustKeyboardInsets
+      // Keeps the first field clear of the header (iOS modals draw content under it otherwise).
+      contentInsetAdjustmentBehavior="automatic"
     >
       {children}
     </ScrollView>

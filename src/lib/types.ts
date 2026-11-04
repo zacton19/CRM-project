@@ -59,6 +59,8 @@ export type Job = {
   price: number | null;
   status: JobStatus;
   notes: string | null;
+  /** Job-specific address; null means use the client's address. */
+  address: string | null;
   reminders: ReminderSettings | null;
   created_at: string;
   updated_at: string;
@@ -67,7 +69,7 @@ export type Job = {
 
 export type JobInput = Pick<
   Job,
-  'client_id' | 'title' | 'starts_at' | 'duration_minutes' | 'price' | 'notes' | 'reminders'
+  'client_id' | 'title' | 'starts_at' | 'duration_minutes' | 'price' | 'notes' | 'address' | 'reminders'
 >;
 
 export type JobSeries = {
@@ -76,7 +78,8 @@ export type JobSeries = {
   title: string;
   first_starts_at: string;
   time_zone: string;
-  interval_weeks: number;
+  interval_weeks: number | null;
+  interval_months: number | null;
   duration_minutes: number;
   price: number | null;
   notes: string | null;

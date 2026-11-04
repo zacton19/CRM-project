@@ -19,7 +19,9 @@ export default function JobDetail() {
   if (error) return <EmptyState text={error} />;
   if (!job) return <Loading />;
 
-  const address = formatAddress(job.client);
+  const clientAddress = formatAddress(job.client);
+  // Directions go to the job's own address when it has one.
+  const address = job.address || clientAddress;
 
   const afterChange = async () => {
     syncReminders().catch(() => {});
@@ -98,10 +100,18 @@ export default function JobDetail() {
 
       <Card onPress={() => router.push({ pathname: '/clients/[id]', params: { id: job.client_id } })}>
         <Text style={styles.title}>{job.client?.name}</Text>
-        {!!address && <Text style={styles.muted}>{address}</Text>}
+        {!!clientAddress && <Text style={styles.muted}>{clientAddress}</Text>}
       </Card>
 
       <Button title="Directions" variant="secondary" onPress={() => openDirections(address)} />
+
+      {!!job.address && (
+        <Section title="Job address">
+          <Card>
+            <Text style={styles.body}>{job.address}</Text>
+          </Card>
+        </Section>
+      )}
 
       {!!job.notes && (
         <Section title="Notes">

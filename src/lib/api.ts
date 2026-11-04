@@ -117,9 +117,9 @@ export async function getJob(id: string): Promise<Job> {
   return unwrap(await supabase.from('jobs').select(`*, ${CLIENT_SUMMARY}`).eq('id', id).single());
 }
 
-/** Creates a one-off job, or a repeating series when intervalWeeks is set. */
-export async function createJob(input: JobInput, intervalWeeks: number | null): Promise<void> {
-  if (!intervalWeeks) {
+/** Creates a one-off job, or a repeating series when intervalMonths is set. */
+export async function createJob(input: JobInput, intervalMonths: number | null): Promise<void> {
+  if (!intervalMonths) {
     unwrap(await supabase.from('jobs').insert(input));
     return;
   }
@@ -129,10 +129,11 @@ export async function createJob(input: JobInput, intervalWeeks: number | null): 
       title: input.title,
       first_starts_at: input.starts_at,
       time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      interval_weeks: intervalWeeks,
+      interval_months: intervalMonths,
       duration_minutes: input.duration_minutes,
       price: input.price,
       notes: input.notes,
+      address: input.address,
       reminders: input.reminders,
     }),
   );
@@ -141,7 +142,7 @@ export async function createJob(input: JobInput, intervalWeeks: number | null): 
 
 /**
  * Updates one job. With applyToFuture, the series template and every later
- * scheduled visit in the series pick up the same title/duration/price/notes/reminders
+ * scheduled visit in the series pick up the same title/duration/price/notes/address/reminders
  * (each visit keeps its own date and time).
  */
 export async function updateJob(job: Job, input: JobInput, applyToFuture: boolean): Promise<void> {
@@ -153,6 +154,7 @@ export async function updateJob(job: Job, input: JobInput, applyToFuture: boolea
     duration_minutes: input.duration_minutes,
     price: input.price,
     notes: input.notes,
+    address: input.address,
     reminders: input.reminders,
   };
   unwrap(await supabase.from('job_series').update(shared).eq('id', job.series_id));
@@ -187,8 +189,11 @@ export async function stopSeries(seriesId: string, after: string): Promise<void>
   );
 }
 
-/** Materialises upcoming occurrences for all active series (idempotent). */
-export async function extendJobSeries(horizonWeeks = 26): Promise<number> {
+/**
+ * Materialises upcoming occurrences for all active series (idempotent).
+ * 56 weeks ahead, so a yearly job's next visit is always on the calendar.
+ */
+export async function extendJobSeries(horizonWeeks = 56): Promise<number> {
   return unwrap(await supabase.rpc('extend_job_series', { horizon_weeks: horizonWeeks }));
 }
 
