@@ -158,6 +158,30 @@ export function rescoreQuotes(force = false): Promise<RescoreResult> {
   return invokeAi('rescore-quotes', { force, timeZone });
 }
 
+export type SearchResultQuote = {
+  id: string;
+  client_name: string;
+  description: string;
+  amount: number;
+  status: QuoteStatus;
+  score: number | null;
+  created_at: string;
+  follow_up_date: string | null;
+};
+
+/**
+ * Natural-language search. Either the filters were understood (description + results), or
+ * the question didn't fit what can be searched and the AI explains why (clarification).
+ */
+export type SearchResponse =
+  | { description: string; results: SearchResultQuote[]; clarification?: undefined }
+  | { clarification: string; description?: undefined; results?: undefined };
+
+export function searchQuotes(query: string): Promise<SearchResponse> {
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return invokeAi('search-quotes', { query, timeZone });
+}
+
 /** Everything the "Follow-ups" screen needs, already shaped for buildFollowUpQueue. */
 export async function getFollowUpQueueData(): Promise<{
   quotes: QueueQuote[];

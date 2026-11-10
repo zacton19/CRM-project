@@ -5,7 +5,7 @@ import { FlatList, RefreshControl, Text, View } from 'react-native';
 
 import { Fab } from '@/components/Fab';
 import { ScoreBadge } from '@/components/ScoreBadge';
-import { Card, Chip, EmptyState, ErrorText, StatusPill, styles } from '@/components/ui';
+import { Button, Card, Chip, EmptyState, ErrorText, StatusPill, styles } from '@/components/ui';
 import { listQuotes } from '@/lib/api';
 import { formatMoney } from '@/lib/format';
 import { QUOTE_STATUSES, QuoteStatus } from '@/lib/types';
@@ -29,6 +29,11 @@ export default function QuotesScreen() {
         refreshControl={<RefreshControl refreshing={loading && quotes.length > 0} onRefresh={reload} />}
         ListHeaderComponent={
           <View style={{ gap: 8 }}>
+            <Button
+              variant="secondary"
+              title="✦ Ask AI: search in plain English"
+              onPress={() => router.push('/search')}
+            />
             <View style={styles.wrap}>
               <Chip label="All" selected={!status} onPress={() => setStatus(undefined)} />
               {QUOTE_STATUSES.map((s) => (
