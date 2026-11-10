@@ -1,11 +1,12 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback } from 'react';
-import { Alert, Pressable, Text } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 
 import { InteractionCard } from '@/components/InteractionCard';
+import { ScoreBadge } from '@/components/ScoreBadge';
 import { QuoteForm } from '@/components/QuoteForm';
 import { colors } from '@/components/theme';
-import { Button, EmptyState, FormScreen, Loading, Section, styles } from '@/components/ui';
+import { Button, Card, EmptyState, FormScreen, Loading, Section, styles } from '@/components/ui';
 import { deleteQuote, getQuote, listInteractions, saveQuote } from '@/lib/api';
 import { formatDay } from '@/lib/format';
 import { useFocusQuery } from '@/lib/useQuery';
@@ -40,6 +41,18 @@ export default function QuoteDetail() {
     <FormScreen>
       {!!quote.follow_up_date && (
         <Text style={styles.body}>Follow up: {formatDay(quote.follow_up_date)}</Text>
+      )}
+      {quote.score != null && (quote.status === 'draft' || quote.status === 'sent') && (
+        <Card>
+          <View style={styles.row}>
+            <Text style={styles.title}>Lead score</Text>
+            <ScoreBadge score={quote.score} />
+          </View>
+          {!!quote.score_rationale && <Text style={styles.body}>{quote.score_rationale}</Text>}
+          {!!quote.score_signals?.length && (
+            <Text style={styles.muted}>{quote.score_signals.join(' · ')}</Text>
+          )}
+        </Card>
       )}
       <QuoteForm
         initial={quote}

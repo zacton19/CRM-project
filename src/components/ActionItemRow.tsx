@@ -9,8 +9,10 @@ import { ActionItem } from '@/lib/types';
 import { colors } from './theme';
 import { styles } from './ui';
 
+type Props = { item: Pick<ActionItem, 'id' | 'description' | 'due_date' | 'done'> };
+
 /** A to-do with a checkbox. Ticking it saves straight away; on failure the tick is undone. */
-export function ActionItemRow({ item }: { item: ActionItem }) {
+export function ActionItemRow({ item }: Props) {
   const [done, setDone] = useState(item.done);
   const overdue = !done && !!item.due_date && isOverdue(item.due_date);
 

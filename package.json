@@ -39,7 +39,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "format": "prettier --write src",
-    "test:functions": "deno check --config supabase/functions/deno.json supabase/functions && deno test --config supabase/functions/deno.json --allow-env supabase/functions"
+    "test": "deno check --config supabase/functions/deno.json supabase/functions && deno test --config supabase/functions/deno.json --allow-env supabase/functions src/lib"
   },
   "private": true
 }

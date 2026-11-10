@@ -36,6 +36,11 @@ export type Quote = {
   notes: string | null;
   /** Set by AI analysis of an interaction about this quote. */
   follow_up_date: string | null;
+  /** AI lead score 0-100 (open quotes only; see rescore-quotes). */
+  score: number | null;
+  score_rationale: string | null;
+  score_signals: string[] | null;
+  scored_at: string | null;
   created_at: string;
   updated_at: string;
   client?: Pick<Client, 'id' | 'name'>;

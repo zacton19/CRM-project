@@ -7,6 +7,6 @@
     }
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
-  // Edge Functions run on Deno and are checked by `npm run test:functions`.
-  "exclude": ["node_modules", "supabase/functions"]
+  // Edge Functions and *.test.ts files run on Deno and are checked by `npm test`.
+  "exclude": ["node_modules", "supabase/functions", "**/*.test.ts"]
 }

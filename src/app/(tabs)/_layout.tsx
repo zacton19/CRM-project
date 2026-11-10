@@ -15,6 +15,7 @@ function TabIcon({ name, color, size }: TabIconProps) {
 
 const TABS: { name: string; title: string; icon: IconProps['name'] }[] = [
   { name: 'index', title: 'Schedule', icon: 'calendar-outline' },
+  { name: 'follow-ups', title: 'Follow-ups', icon: 'flag-outline' },
   { name: 'clients', title: 'Clients', icon: 'people-outline' },
   { name: 'quotes', title: 'Quotes', icon: 'document-text-outline' },
   { name: 'settings', title: 'Settings', icon: 'settings-outline' },

@@ -1,5 +1,6 @@
 import { FunctionsHttpError } from '@supabase/supabase-js';
 
+import { QueueActionItem, QueueClient, QueueQuote } from './queue';
 import { supabase } from './supabase';
 import {
   ActionItem,
@@ -140,6 +141,43 @@ export type AnalyzeResult = {
 export function analyzeInteraction(interactionId: string): Promise<AnalyzeResult> {
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   return invokeAi('analyze-interaction', { interactionId, timeZone });
+}
+
+export type RescoreResult = {
+  scored: number;
+  fromCache: number;
+  skipped: number;
+  remaining: number;
+  /** Set if the AI stopped partway; scores saved before that are kept. */
+  error: string | null;
+};
+
+/** Scores open quotes whose details or interactions changed since their last score. */
+export function rescoreQuotes(force = false): Promise<RescoreResult> {
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return invokeAi('rescore-quotes', { force, timeZone });
+}
+
+/** Everything the "Follow-ups" screen needs, already shaped for buildFollowUpQueue. */
+export async function getFollowUpQueueData(): Promise<{
+  quotes: QueueQuote[];
+  clients: QueueClient[];
+  actionItems: QueueActionItem[];
+}> {
+  const [quotes, clients, actionItems] = await Promise.all([
+    supabase
+      .from('quotes')
+      .select('*, client:clients(name)')
+      .in('status', ['draft', 'sent'])
+      .overrideTypes<(Quote & { client: { name: string } })[], { merge: false }>(),
+    supabase.from('clients').select('id, name, follow_up_date').not('follow_up_date', 'is', null),
+    supabase.from('action_items').select('*').eq('done', false),
+  ]);
+  return {
+    quotes: unwrap(quotes).map((q) => ({ ...q, client_name: q.client.name })),
+    clients: unwrap(clients),
+    actionItems: unwrap(actionItems),
+  };
 }
 
 // ---------------------------------------------------------------------------

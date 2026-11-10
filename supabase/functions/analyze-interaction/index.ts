@@ -24,12 +24,15 @@ type InteractionRow = {
 
 export default {
   fetch: aiEndpoint(Body, async ({ interactionId, timeZone }, supabase) => {
-    const interaction = unwrap<InteractionRow | null>(
+    const interaction = unwrap(
       await supabase
         .from('interactions')
         .select('id, kind, body, occurred_at, client:clients(name), quote:quotes(description, amount, status)')
         .eq('id', interactionId)
-        .maybeSingle(),
+        .maybeSingle()
+        // Without generated DB types, supabase-js assumes joined rows are arrays; an
+        // interaction has one client and at most one quote, so we state the real shape.
+        .overrideTypes<InteractionRow | null, { merge: false }>(),
     );
     if (!interaction) throw new BadRequestError('Interaction not found.');
 

@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
 
 import { Fab } from '@/components/Fab';
+import { ScoreBadge } from '@/components/ScoreBadge';
 import { Card, Chip, EmptyState, ErrorText, StatusPill, styles } from '@/components/ui';
 import { listQuotes } from '@/lib/api';
 import { formatMoney } from '@/lib/format';
@@ -55,7 +56,10 @@ export default function QuotesScreen() {
               </Text>
               <StatusPill status={item.status} />
             </View>
-            <Text style={styles.muted}>{format(new Date(item.created_at), 'd MMM yyyy')}</Text>
+            <View style={styles.row}>
+              <Text style={styles.muted}>{format(new Date(item.created_at), 'd MMM yyyy')}</Text>
+              {(item.status === 'draft' || item.status === 'sent') && <ScoreBadge score={item.score} />}
+            </View>
           </Card>
         )}
       />
