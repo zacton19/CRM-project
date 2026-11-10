@@ -1,10 +1,14 @@
+import { FunctionsHttpError } from '@supabase/supabase-js';
+
 import { supabase } from './supabase';
 import {
+  ActionItem,
   AiUsage,
   Client,
   ClientInput,
   DEFAULT_REMINDERS,
   Interaction,
+  InteractionAnalysis,
   InteractionInput,
   Job,
   JobInput,
@@ -104,6 +108,60 @@ export async function saveInteraction(input: InteractionInput, id?: string): Pro
 
 export async function deleteInteraction(id: string): Promise<void> {
   unwrap(await supabase.from('interactions').delete().eq('id', id));
+}
+
+// ---------------------------------------------------------------------------
+// AI features (Supabase Edge Functions; the Claude API key never reaches the app)
+// ---------------------------------------------------------------------------
+
+/**
+ * Calls an Edge Function and returns its JSON. On failure, throws an Error whose message is
+ * safe to show: the function's own { error } message if it sent one, otherwise a generic one.
+ */
+async function invokeAi<T>(name: string, body: object): Promise<T> {
+  const { data, error } = await supabase.functions.invoke(name, { body });
+  if (!error) return data as T;
+
+  let message = 'Could not reach the AI service. Everything else in the app still works.';
+  if (error instanceof FunctionsHttpError) {
+    const payload = await error.context.json().catch(() => null);
+    if (typeof payload?.error === 'string') message = payload.error;
+  }
+  throw new Error(message);
+}
+
+export type AnalyzeResult = {
+  analysis: InteractionAnalysis;
+  appliedStatus: QuoteStatus | null;
+  cacheHit: boolean;
+};
+
+/** Summarises the interaction and saves action items / follow-up date / status change. */
+export function analyzeInteraction(interactionId: string): Promise<AnalyzeResult> {
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return invokeAi('analyze-interaction', { interactionId, timeZone });
+}
+
+// ---------------------------------------------------------------------------
+// Action items
+// ---------------------------------------------------------------------------
+export async function listActionItems(
+  filter: { clientId?: string; interactionId?: string; openOnly?: boolean } = {},
+): Promise<ActionItem[]> {
+  let query = supabase
+    .from('action_items')
+    .select('*')
+    .order('done')
+    .order('due_date', { ascending: true, nullsFirst: false })
+    .order('created_at');
+  if (filter.clientId) query = query.eq('client_id', filter.clientId);
+  if (filter.interactionId) query = query.eq('interaction_id', filter.interactionId);
+  if (filter.openOnly) query = query.eq('done', false);
+  return unwrap(await query);
+}
+
+export async function setActionItemDone(id: string, done: boolean): Promise<void> {
+  unwrap(await supabase.from('action_items').update({ done }).eq('id', id));
 }
 
 // ---------------------------------------------------------------------------

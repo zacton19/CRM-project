@@ -7,6 +7,7 @@ import { QuoteForm } from '@/components/QuoteForm';
 import { colors } from '@/components/theme';
 import { Button, EmptyState, FormScreen, Loading, Section, styles } from '@/components/ui';
 import { deleteQuote, getQuote, listInteractions, saveQuote } from '@/lib/api';
+import { formatDay } from '@/lib/format';
 import { useFocusQuery } from '@/lib/useQuery';
 
 export default function QuoteDetail() {
@@ -37,6 +38,9 @@ export default function QuoteDetail() {
 
   return (
     <FormScreen>
+      {!!quote.follow_up_date && (
+        <Text style={styles.body}>Follow up: {formatDay(quote.follow_up_date)}</Text>
+      )}
       <QuoteForm
         initial={quote}
         onSubmit={async (input) => {

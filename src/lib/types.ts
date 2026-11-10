@@ -14,11 +14,13 @@ export type Client = {
   email: string | null;
   address: string | null;
   notes: string | null;
+  /** Set by AI analysis of a general (non-quote) interaction. */
+  follow_up_date: string | null;
   created_at: string;
   updated_at: string;
 };
 
-export type ClientInput = Omit<Client, 'id' | 'created_at' | 'updated_at'>;
+export type ClientInput = Omit<Client, 'id' | 'follow_up_date' | 'created_at' | 'updated_at'>;
 
 export type ClientSummary = Pick<Client, 'id' | 'name' | 'address'>;
 
@@ -32,6 +34,8 @@ export type Quote = {
   amount: number;
   status: QuoteStatus;
   notes: string | null;
+  /** Set by AI analysis of an interaction about this quote. */
+  follow_up_date: string | null;
   created_at: string;
   updated_at: string;
   client?: Pick<Client, 'id' | 'name'>;
@@ -91,6 +95,12 @@ export type Interaction = {
   kind: InteractionKind;
   body: string;
   occurred_at: string;
+  /** Filled in by "Analyze with AI". */
+  summary: string | null;
+  analysis: InteractionAnalysis | null;
+  analyzed_at: string | null;
+  /** The quote status this interaction changed the quote to, if any. */
+  applied_status: QuoteStatus | null;
   created_at: string;
   updated_at: string;
   client?: Pick<Client, 'id' | 'name'>;
@@ -110,4 +120,25 @@ export type AiUsage = {
   output_tokens: number;
   cost_usd: number;
   avg_latency_ms: number | null;
+};
+
+/** What Claude extracted from an interaction (validated server-side, see _shared/analyze.ts). */
+export type InteractionAnalysis = {
+  summary: string;
+  action_items: { description: string; due_date: string | null }[];
+  follow_up_date: string | null;
+  suggested_status: string | null;
+  confidence: number;
+};
+
+export type ActionItem = {
+  id: string;
+  client_id: string;
+  quote_id: string | null;
+  /** The interaction it was extracted from; null if added by hand. */
+  interaction_id: string | null;
+  description: string;
+  due_date: string | null;
+  done: boolean;
+  created_at: string;
 };

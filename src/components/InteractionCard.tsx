@@ -12,11 +12,15 @@ export function InteractionCard({ interaction }: { interaction: Interaction }) {
   return (
     <Card onPress={() => router.push({ pathname: '/interactions/[id]', params: { id: interaction.id } })}>
       <View style={styles.row}>
-        <Text style={styles.title}>{interactionKindLabel(interaction.kind)}</Text>
+        <Text style={styles.title}>
+          {interactionKindLabel(interaction.kind)}
+          {interaction.summary ? '  ✦ summarised' : ''}
+        </Text>
         <Text style={styles.muted}>{format(new Date(interaction.occurred_at), 'd MMM yyyy')}</Text>
       </View>
+      {/* The AI summary once analysed, otherwise the start of the raw text. */}
       <Text style={styles.muted} numberOfLines={2}>
-        {interaction.body}
+        {interaction.summary ?? interaction.body}
       </Text>
     </Card>
   );

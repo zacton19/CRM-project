@@ -4,11 +4,19 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback } from 'react';
 import { Alert, Linking, Pressable, Text, View } from 'react-native';
 
+import { ActionItemRow } from '@/components/ActionItemRow';
 import { InteractionCard } from '@/components/InteractionCard';
 import { colors } from '@/components/theme';
 import { Button, Card, EmptyState, FormScreen, Loading, Section, StatusPill, styles } from '@/components/ui';
-import { deleteClient, getClient, listInteractions, listJobsForClient, listQuotes } from '@/lib/api';
-import { formatAddress, formatDateTime, formatMoney } from '@/lib/format';
+import {
+  deleteClient,
+  getClient,
+  listActionItems,
+  listInteractions,
+  listJobsForClient,
+  listQuotes,
+} from '@/lib/api';
+import { formatAddress, formatDateTime, formatDay, formatMoney, isOverdue } from '@/lib/format';
 import { openDirections } from '@/lib/maps';
 import { syncReminders } from '@/lib/reminders';
 import { useFocusQuery } from '@/lib/useQuery';
@@ -17,11 +25,12 @@ export default function ClientDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, error } = useFocusQuery(
     useCallback(async () => {
-      const [client, quotes, jobs, interactions] = await Promise.all([
+      const [client, quotes, jobs, interactions, actionItems] = await Promise.all([
         getClient(id),
         listQuotes({ clientId: id }),
         listJobsForClient(id),
         listInteractions({ clientId: id }),
+        listActionItems({ clientId: id, openOnly: true }),
       ]);
       // Jobs arrive newest first; upcoming should read soonest first.
       const now = Date.now();
@@ -29,13 +38,13 @@ export default function ClientDetail() {
         .filter((j) => j.status === 'scheduled' && new Date(j.starts_at).getTime() >= now)
         .reverse();
       const history = jobs.filter((j) => !upcoming.includes(j)).slice(0, 10);
-      return { client, quotes, upcoming, history, interactions };
+      return { client, quotes, upcoming, history, interactions, actionItems };
     }, [id]),
   );
 
   if (error) return <EmptyState text={error} />;
   if (!data) return <Loading />;
-  const { client, quotes, upcoming, history, interactions } = data;
+  const { client, quotes, upcoming, history, interactions, actionItems } = data;
 
   const address = formatAddress(client);
 
@@ -112,6 +121,22 @@ export default function ClientDetail() {
         />
       </View>
 
+      {!!client.follow_up_date && (
+        <Text style={[styles.body, isOverdue(client.follow_up_date) && { color: colors.danger }]}>
+          Follow up: {formatDay(client.follow_up_date)}
+        </Text>
+      )}
+
+      {actionItems.length > 0 && (
+        <Section title="To do">
+          <Card>
+            {actionItems.map((item) => (
+              <ActionItemRow key={item.id} item={item} />
+            ))}
+          </Card>
+        </Section>
+      )}
+
       {!!client.notes && (
         <Section title="Notes">
           <Card>
@@ -165,6 +190,9 @@ export default function ClientDetail() {
               <Text style={styles.muted}>{format(new Date(quote.created_at), 'd MMM yyyy')}</Text>
               <StatusPill status={quote.status} />
             </View>
+            {!!quote.follow_up_date && (
+              <Text style={styles.muted}>Follow up: {formatDay(quote.follow_up_date)}</Text>
+            )}
           </Card>
         ))}
       </Section>

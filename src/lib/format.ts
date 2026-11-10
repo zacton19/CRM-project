@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { format, isBefore, isToday, parseISO, startOfToday } from 'date-fns';
 
 import { ClientSummary } from './types';
 
@@ -39,4 +39,19 @@ export function parseAmount(text: string): number | null {
   const trimmed = text.trim();
   if (!trimmed) return null;
   return Number(trimmed.replace(/[^0-9.]/g, ''));
+}
+
+// Date-only values from the database ("2026-11-12"). parseISO reads these as local dates;
+// new Date("2026-11-12") would read them as UTC midnight and could show the previous day.
+
+export function formatDay(day: string): string {
+  return format(parseISO(day), 'EEE d MMM');
+}
+
+export function isOverdue(day: string): boolean {
+  return isBefore(parseISO(day), startOfToday());
+}
+
+export function isDueToday(day: string): boolean {
+  return isToday(parseISO(day));
 }
