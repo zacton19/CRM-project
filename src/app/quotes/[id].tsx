@@ -1,21 +1,29 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Pressable, Text } from 'react-native';
 
+import { InteractionCard } from '@/components/InteractionCard';
 import { QuoteForm } from '@/components/QuoteForm';
-import { Button, EmptyState, FormScreen, Loading } from '@/components/ui';
-import { deleteQuote, getQuote, saveQuote } from '@/lib/api';
+import { colors } from '@/components/theme';
+import { Button, EmptyState, FormScreen, Loading, Section, styles } from '@/components/ui';
+import { deleteQuote, getQuote, listInteractions, saveQuote } from '@/lib/api';
 import { useFocusQuery } from '@/lib/useQuery';
 
 export default function QuoteDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data: quote, error } = useFocusQuery(useCallback(() => getQuote(id), [id]));
+  const { data, error } = useFocusQuery(
+    useCallback(async () => {
+      const [quote, interactions] = await Promise.all([getQuote(id), listInteractions({ quoteId: id })]);
+      return { quote, interactions };
+    }, [id]),
+  );
 
   if (error) return <EmptyState text={error} />;
-  if (!quote) return <Loading />;
+  if (!data) return <Loading />;
+  const { quote, interactions } = data;
 
   const confirmDelete = () =>
-    Alert.alert('Delete quote?', undefined, [
+    Alert.alert('Delete quote?', 'Its interactions stay on the client.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
@@ -46,6 +54,29 @@ export default function QuoteDetail() {
           })
         }
       />
+
+      <Section
+        title="Interactions"
+        action={
+          <Pressable
+            onPress={() =>
+              router.push({
+                pathname: '/interactions/new',
+                params: { clientId: quote.client_id, quoteId: id },
+              })
+            }
+            hitSlop={10}
+          >
+            <Text style={{ color: colors.primary, fontWeight: '600' }}>+ Log</Text>
+          </Pressable>
+        }
+      >
+        {interactions.length === 0 && <Text style={styles.muted}>Nothing logged for this quote yet.</Text>}
+        {interactions.map((interaction) => (
+          <InteractionCard key={interaction.id} interaction={interaction} />
+        ))}
+      </Section>
+
       <Button variant="danger" title="Delete quote" onPress={confirmDelete} />
     </FormScreen>
   );

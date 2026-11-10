@@ -79,3 +79,21 @@ export type JobSeries = {
   notes: string | null;
   active: boolean;
 };
+
+export const INTERACTION_KINDS = ['email', 'call', 'visit', 'note'] as const;
+export type InteractionKind = (typeof INTERACTION_KINDS)[number];
+
+/** An email, call, site visit or note about a client, optionally about one of their quotes. */
+export type Interaction = {
+  id: string;
+  client_id: string;
+  quote_id: string | null;
+  kind: InteractionKind;
+  body: string;
+  occurred_at: string;
+  created_at: string;
+  updated_at: string;
+  client?: Pick<Client, 'id' | 'name'>;
+};
+
+export type InteractionInput = Pick<Interaction, 'client_id' | 'quote_id' | 'kind' | 'body' | 'occurred_at'>;

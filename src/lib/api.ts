@@ -3,6 +3,8 @@ import {
   Client,
   ClientInput,
   DEFAULT_REMINDERS,
+  Interaction,
+  InteractionInput,
   Job,
   JobInput,
   JobStatus,
@@ -72,6 +74,35 @@ export async function saveQuote(input: QuoteInput, id?: string): Promise<Quote> 
 
 export async function deleteQuote(id: string): Promise<void> {
   unwrap(await supabase.from('quotes').delete().eq('id', id));
+}
+
+// ---------------------------------------------------------------------------
+// Interactions (emails, calls, visits, notes)
+// ---------------------------------------------------------------------------
+export async function listInteractions(
+  filter: { clientId?: string; quoteId?: string } = {},
+): Promise<Interaction[]> {
+  let query = supabase.from('interactions').select('*').order('occurred_at', { ascending: false });
+  if (filter.clientId) query = query.eq('client_id', filter.clientId);
+  if (filter.quoteId) query = query.eq('quote_id', filter.quoteId);
+  return unwrap(await query);
+}
+
+export async function getInteraction(id: string): Promise<Interaction> {
+  return unwrap(
+    await supabase.from('interactions').select('*, client:clients(id, name)').eq('id', id).single(),
+  );
+}
+
+export async function saveInteraction(input: InteractionInput, id?: string): Promise<Interaction> {
+  const query = id
+    ? supabase.from('interactions').update(input).eq('id', id)
+    : supabase.from('interactions').insert(input);
+  return unwrap(await query.select().single());
+}
+
+export async function deleteInteraction(id: string): Promise<void> {
+  unwrap(await supabase.from('interactions').delete().eq('id', id));
 }
 
 // ---------------------------------------------------------------------------
@@ -194,6 +225,11 @@ export async function stopSeries(seriesId: string, after: string): Promise<void>
 // Permanently deletes the signed-in user and, via cascades, all of their data.
 export async function deleteOwnAccount(): Promise<void> {
   unwrap(await supabase.rpc('delete_own_account'));
+}
+
+/** Replaces any previous demo clients with fresh sample data (see the seed_demo_data migration). */
+export async function seedDemoData(): Promise<void> {
+  unwrap(await supabase.rpc('seed_demo_data'));
 }
 
 export async function extendJobSeries(horizonWeeks = 56): Promise<number> {

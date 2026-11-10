@@ -4,9 +4,10 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback } from 'react';
 import { Alert, Linking, Pressable, Text, View } from 'react-native';
 
+import { InteractionCard } from '@/components/InteractionCard';
 import { colors } from '@/components/theme';
 import { Button, Card, EmptyState, FormScreen, Loading, Section, StatusPill, styles } from '@/components/ui';
-import { deleteClient, getClient, listJobsForClient, listQuotes } from '@/lib/api';
+import { deleteClient, getClient, listInteractions, listJobsForClient, listQuotes } from '@/lib/api';
 import { formatAddress, formatDateTime, formatMoney } from '@/lib/format';
 import { openDirections } from '@/lib/maps';
 import { syncReminders } from '@/lib/reminders';
@@ -16,10 +17,11 @@ export default function ClientDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data, error } = useFocusQuery(
     useCallback(async () => {
-      const [client, quotes, jobs] = await Promise.all([
+      const [client, quotes, jobs, interactions] = await Promise.all([
         getClient(id),
         listQuotes({ clientId: id }),
         listJobsForClient(id),
+        listInteractions({ clientId: id }),
       ]);
       // Jobs arrive newest first; upcoming should read soonest first.
       const now = Date.now();
@@ -27,18 +29,18 @@ export default function ClientDetail() {
         .filter((j) => j.status === 'scheduled' && new Date(j.starts_at).getTime() >= now)
         .reverse();
       const history = jobs.filter((j) => !upcoming.includes(j)).slice(0, 10);
-      return { client, quotes, upcoming, history };
+      return { client, quotes, upcoming, history, interactions };
     }, [id]),
   );
 
   if (error) return <EmptyState text={error} />;
   if (!data) return <Loading />;
-  const { client, quotes, upcoming, history } = data;
+  const { client, quotes, upcoming, history, interactions } = data;
 
   const address = formatAddress(client);
 
   const confirmDelete = () =>
-    Alert.alert('Delete client?', `This also deletes all quotes and jobs for ${client.name}.`, [
+    Alert.alert('Delete client?', `This also deletes all quotes, jobs and interactions for ${client.name}.`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
@@ -164,6 +166,23 @@ export default function ClientDetail() {
               <StatusPill status={quote.status} />
             </View>
           </Card>
+        ))}
+      </Section>
+
+      <Section
+        title="Interactions"
+        action={
+          <Pressable
+            onPress={() => router.push({ pathname: '/interactions/new', params: { clientId: id } })}
+            hitSlop={10}
+          >
+            <Text style={{ color: colors.primary, fontWeight: '600' }}>+ Log</Text>
+          </Pressable>
+        }
+      >
+        {interactions.length === 0 && <Text style={styles.muted}>No emails, calls or notes yet.</Text>}
+        {interactions.map((interaction) => (
+          <InteractionCard key={interaction.id} interaction={interaction} />
         ))}
       </Section>
 

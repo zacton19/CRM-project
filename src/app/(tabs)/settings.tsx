@@ -4,7 +4,7 @@ import { Alert, Linking, Text } from 'react-native';
 
 import { ReminderPicker } from '@/components/ReminderPicker';
 import { Button, Card, ErrorText, FormScreen, Section, styles } from '@/components/ui';
-import { deleteOwnAccount, getReminderSettings, saveReminderSettings } from '@/lib/api';
+import { deleteOwnAccount, getReminderSettings, saveReminderSettings, seedDemoData } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { clearReminders, ensureNotificationPermission, syncReminders } from '@/lib/reminders';
 import { supabase } from '@/lib/supabase';
@@ -27,6 +27,7 @@ export default function SettingsScreen() {
   const [scheduledCount, setScheduledCount] = useState(0);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [seeding, setSeeding] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const applyStatus = (status: NotificationStatus) => {
@@ -64,6 +65,20 @@ export default function SettingsScreen() {
     }
     await syncReminders();
     await refreshStatus();
+  };
+
+  const loadDemoData = async () => {
+    setSeeding(true);
+    setError(null);
+    try {
+      await seedDemoData();
+      await syncReminders();
+      Alert.alert('Demo data loaded', 'Look for the sample clients in the Clients tab.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSeeding(false);
+    }
   };
 
   const signOut = async () => {
@@ -119,6 +134,14 @@ export default function SettingsScreen() {
           </Text>
         </Card>
         {permission === false && <Button title="Turn on notifications" onPress={enableNotifications} />}
+      </Section>
+
+      <Section title="Demo data">
+        <Text style={styles.muted}>
+          Adds sample clients, quotes and email history for trying the AI features. Running it again
+          replaces the previous demo clients; your own clients are never touched.
+        </Text>
+        <Button variant="secondary" title="Load demo data" onPress={loadDemoData} loading={seeding} />
       </Section>
 
       <Section title="Account">

@@ -45,6 +45,8 @@ function RootNavigator() {
         <Stack.Screen name="clients/[id]/edit" options={{ title: 'Edit client', presentation: 'modal' }} />
         <Stack.Screen name="quotes/new" options={{ title: 'New quote', presentation: 'modal' }} />
         <Stack.Screen name="quotes/[id]" options={{ title: 'Quote' }} />
+        <Stack.Screen name="interactions/new" options={{ title: 'Log interaction', presentation: 'modal' }} />
+        <Stack.Screen name="interactions/[id]" options={{ title: 'Interaction' }} />
         <Stack.Screen name="jobs/new" options={{ title: 'New job', presentation: 'modal' }} />
         <Stack.Screen name="jobs/[id]/index" options={{ title: 'Job' }} />
         <Stack.Screen name="jobs/[id]/edit" options={{ title: 'Edit job', presentation: 'modal' }} />
