@@ -11,6 +11,8 @@ alter table public.jobs       add column if not exists address text;
 -- A series now repeats every N weeks OR every N months.
 alter table public.job_series alter column interval_weeks drop not null;
 -- NOT VALID: only checked for new and updated rows, so existing rows can't block the migration.
+-- Dropped first in case it was already added by hand, so this file is safe to re-run.
+alter table public.job_series drop constraint if exists job_series_one_interval;
 alter table public.job_series add constraint job_series_one_interval
   check ((interval_weeks is null) <> (interval_months is null)) not valid;
 
