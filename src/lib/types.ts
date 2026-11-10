@@ -97,3 +97,17 @@ export type Interaction = {
 };
 
 export type InteractionInput = Pick<Interaction, 'client_id' | 'quote_id' | 'kind' | 'body' | 'occurred_at'>;
+
+export type AiFeature = 'analyze' | 'score' | 'search';
+
+/** One row of the llm_usage_by_feature view: totals of every Claude request for a feature. */
+export type AiUsage = {
+  feature: AiFeature;
+  calls: number;
+  cache_hits: number;
+  failures: number;
+  input_tokens: number;
+  output_tokens: number;
+  cost_usd: number;
+  avg_latency_ms: number | null;
+};

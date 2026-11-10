@@ -2,6 +2,7 @@ import * as Notifications from 'expo-notifications';
 import { useEffect, useState } from 'react';
 import { Alert, Linking, Text } from 'react-native';
 
+import { AiUsageCard } from '@/components/AiUsageCard';
 import { ReminderPicker } from '@/components/ReminderPicker';
 import { Button, Card, ErrorText, FormScreen, Section, styles } from '@/components/ui';
 import { deleteOwnAccount, getReminderSettings, saveReminderSettings, seedDemoData } from '@/lib/api';
@@ -134,6 +135,11 @@ export default function SettingsScreen() {
           </Text>
         </Card>
         {permission === false && <Button title="Turn on notifications" onPress={enableNotifications} />}
+      </Section>
+
+      <Section title="AI usage">
+        <Text style={styles.muted}>Every AI request is logged with its tokens, cost and speed.</Text>
+        <AiUsageCard />
       </Section>
 
       <Section title="Demo data">

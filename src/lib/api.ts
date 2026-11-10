@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import {
+  AiUsage,
   Client,
   ClientInput,
   DEFAULT_REMINDERS,
@@ -225,6 +226,11 @@ export async function stopSeries(seriesId: string, after: string): Promise<void>
 // Permanently deletes the signed-in user and, via cascades, all of their data.
 export async function deleteOwnAccount(): Promise<void> {
   unwrap(await supabase.rpc('delete_own_account'));
+}
+
+/** Totals of AI requests by feature: calls, cache hits, tokens, cost (see llm_call_log). */
+export async function getAiUsage(): Promise<AiUsage[]> {
+  return unwrap(await supabase.from('llm_usage_by_feature').select('*').order('feature'));
 }
 
 /** Replaces any previous demo clients with fresh sample data (see the seed_demo_data migration). */

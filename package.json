@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.3.0",
+    "deno": "^2.9.6",
     "eslint": "^9.0.0",
     "eslint-config-expo": "~58.0.4",
     "prettier": "^3.9.10",
@@ -36,7 +37,8 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
-    "format": "prettier --write src"
+    "format": "prettier --write src",
+    "test:functions": "deno test --config supabase/functions/deno.json --allow-env supabase/functions"
   },
   "private": true
 }

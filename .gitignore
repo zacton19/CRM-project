@@ -39,3 +39,8 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# secrets (Edge Function keys live in supabase/functions/.env locally)
+.env
+supabase/functions/.env
+supabase/.temp/
